@@ -1,0 +1,171 @@
+<html>
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache,no-store">
+    <meta http-equiv="Expires" content="0">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>
+        GATOGOKU
+        Epson Web power
+    </title>
+<head>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+	<script src="jquery-3.6.0.min.js"></script>
+	<script src="file.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/push.js/0.0.11/push.min.js"></script>
+
+
+<script>
+
+
+function notify(time){
+
+Push.create('EPSON', {
+    body: 'Cuenta regresiva Power Epson:  ' + time,
+    icon: 'icon.png',
+    timeout: 5,               // Timeout before notification closes automatically.
+    vibrate: [0,0,0],//[100, 100, 100],    // An array of vibration pulses for mobile devices.
+    onClick: function() {
+        // Callback for when the notification is clicked. 
+        console.log(this);
+    }  
+});
+
+
+}
+
+
+var server = $("#ip").val();// "192.168.43.148";
+
+//http://192.168.0.16/cgi-bin/Remote/directsend?KEY=57  volumen -
+//http://192.168.0.16/cgi-bin/Remote/directsend?KEY=56  volumen +
+
+function RemoteCommand ( callback) {
+    var url= "http://"+server +'/cgi-bin/Remote/directsend?KEY=' ;
+
+		$.ajax({
+			type: 'PATCH',
+			cache: false,
+            timeout: 20000,
+            crossDomain:false,
+            dataType: 'jsonp',
+			url: url + callback,
+		}).done(function (response) {
+			if (callback) {
+				callback(response);
+			}
+		}).fail(function (request, status, error) {
+			console.log('error:' + request + ',' + status + ',' + error);
+		});
+	};
+
+var timer;
+
+
+function stop(){
+
+	timer.cancel();
+	alert("El conteo se ha detenido");
+}
+
+	function countdown () {
+
+		var tiempo =  $("#tiempo").val();
+
+
+if(!$.isNumeric(tiempo) || tiempo ==0){alert("Debe introducir un valor numerico y mayor a  0");return;}
+tiempo = tiempo*60;
+timer = new BackgroundTimer(tiempo * 1000, function() {
+    // This callback will be called after 10 seconds
+	
+ RemoteCommand("3B");
+ //sleep(100);
+ RemoteCommand("3B");
+//clearInterval(x);
+console.log("finished");
+//alert("El conteo ha finalizado");
+
+    
+});
+
+timer.enableTicking(1000, function(remaining) {
+    // This callback will get called every second (1000 millisecond) till the timer ends
+    console.log(remaining);
+	console.log(tiempo);
+var minutos = Math.trunc(tiempo/60);
+var segundos =  (tiempo % 60);
+
+if(tiempo % 10==0)notify(minutos.toString() + ":" + segundos.toString());
+console.log("length: " + minutos.toString().length + " - " + segundos.toString().length);
+if(minutos.toString().length<2) {minutos = "0"+minutos; }
+if(segundos.toString().length<2){segundos= "0"+segundos;}
+console.log(minutos + ":" + segundos + "  -   segundos totales:  " +  tiempo);
+$("#conteo").html(minutos + ":" + segundos);
+
+
+ tiempo-=1;
+});
+
+timer.start();
+
+	}
+
+
+		
+$(document).ready(function () {
+	Push.Permission.request();
+});
+
+</script>
+
+<style>
+	body{
+background-color:black;
+color: white;
+	}
+
+
+</style>
+
+</head>
+
+<body>
+
+	<div class="col-lg-6 offset-lg-3 " style="margin-top:100px;">
+		<div class="row justify-content-center">
+
+		
+<input id = "ip" class="col-sm-6 col-md-6 form-control" type="text"> <label>Direccion IP Proyector</label>
+
+<br>
+<input id = "tiempo" class="col-sm-6 col-md-6 form-control" type="text"> <label>Tiempo para apagar(En minutos)</label>
+
+<br>
+<button class= "col-sm-4 col-md-4 btn-primary" value="3B" onclick="RemoteCommand('3B')">POWER</button>
+
+<br>
+<button class= "col-sm-4 col-md-4 btn btn-secondary" onClick = "countdown()" >INICIAR TEMPORIZADOR</button>
+<br>
+<button class= "col-sm-4 col-md-4 btn-danger" value="3B" onclick="stop()">FINALIZAR TEMPORIZADOR</button>
+
+
+<button class= "col-sm-6 col-md-6 btn btn-info" onClick = "RemoteCommand('57')" >VOLUMEN -</button>
+
+<button class= "col-sm-6 col-md-6 btn btn-success" onClick = "RemoteCommand('56')" >VOLUMEN +</button>
+
+
+<br>
+<div id="conteo" class="row justify-content-center" style="background-color:blue;font-size:100px;border-radius: 20px;margin-top:100px;"></div>
+
+
+		</div>
+		
+	</div>
+
+
+
+
+</body>
+<script>src="file.js"</script>
+</html>
